@@ -19,7 +19,13 @@ trap 'rm -rf "$stage_dir"' EXIT
 cd "$repo_dir"
 
 source_commit="$(git rev-parse HEAD)"
-xcodebuild -version
+xcode_version="$(xcodebuild -version)"
+printf '%s\n' "$xcode_version"
+xcode_major="$(printf '%s\n' "$xcode_version" | awk '/^Xcode / {split($2, version, "."); print version[1]}')"
+if [[ -z "$xcode_major" || "$xcode_major" -lt 27 ]]; then
+    echo 'Xcode 27 or newer is required: upstream uses macOS 27 SDK APIs.' >&2
+    exit 1
+fi
 xcodebuild -project FSNotes.xcodeproj -scheme FSNotes \
     -configuration Release -destination 'platform=macOS,arch=arm64' \
     -derivedDataPath "$derived_data" \

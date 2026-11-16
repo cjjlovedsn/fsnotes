@@ -8,8 +8,8 @@ FSNotes 定制版：打 tag 自动发布 Mac 应用
 先提交并推送改动，再给该提交创建一个新标签：
 
     git push origin master
-    git tag -a custom-2026.11.16.3 -m "FSNotes custom release"
-    git push origin custom-2026.11.16.3
+    git tag -a custom-2026.11.16.4 -m "FSNotes custom release"
+    git push origin custom-2026.11.16.4
 
 也支持以 v 开头的版本标签，例如 v7.6.1-custom.1。
 标签仅允许字母、数字、点、下划线和短横线，v/custom- 前缀后须以数字开头。
@@ -17,7 +17,7 @@ FSNotes 定制版：打 tag 自动发布 Mac 应用
 
 GitHub Actions 自动执行
 1. 从标签指定的确切提交获取源码，运行原生编辑器组件检查。
-2. 在 macOS 26 Apple Silicon runner 上使用 Xcode Release 配置编译。
+2. 在 GitHub 的 Xcode 27 Apple Silicon runner 上使用 Release 配置编译。
 3. 给应用写入定制标签和源码提交信息，完成临时签名与签名校验。
 4. 打包 FSNotes.app、README 和 MIT 许可证，生成 SHA256SUMS.txt。
 5. 核对构建产物后上传附件，最后正式发布 GitHub Release。
@@ -40,9 +40,9 @@ custom-2026.11.16.1 不包含这些脚本，不能用于此入口。
 及 Info.plist 的 FSNotesCustomReleaseTag、FSNotesSourceCommit 字段。
 
 本机复现
-在 macOS 上安装 Xcode 后运行：
+在 macOS 上安装 Xcode 27 或更新版本后运行（上游使用 macOS 27 SDK 接口）：
 
     Tests/CodeBlockCopy/run.sh
-    scripts/build-macos-release.sh custom-2026.11.16.3
+    scripts/build-macos-release.sh custom-2026.11.16.4
 
 输出位于 dist/，中间产物位于 .build-release/。

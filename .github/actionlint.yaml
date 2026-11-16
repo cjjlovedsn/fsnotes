@@ -1,0 +1,6 @@
+# This is a GitHub-hosted preview image. actionlint's built-in label catalogue
+# does not include it yet; this setting only extends the linter's known labels.
+# https://github.com/actions/runner-images#available-images
+self-hosted-runner:
+  labels:
+    - xcode-27

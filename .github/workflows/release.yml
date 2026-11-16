@@ -20,7 +20,9 @@ concurrency:
 
 jobs:
   build-macos:
-    runs-on: macos-26
+    # Upstream uses NSGlassEffectView.effectIsInteractive from the macOS 27 SDK.
+    # A runtime #available check does not make this compile with Xcode 26.
+    runs-on: xcode-27
     timeout-minutes: 45
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
