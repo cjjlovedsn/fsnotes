@@ -48,7 +48,9 @@ jobs:
           printf 'tag=%s\n' "$RELEASE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Run native editor regression checks
-        run: Tests/CodeBlockCopy/run.sh 2>&1 | tee "$RUNNER_TEMP/fsnotes-checks.log"
+        run: |
+          Tests/CodeBlockCopy/run.sh 2>&1 | tee "$RUNNER_TEMP/fsnotes-checks.log"
+          Tests/ApplicationInstallHint/run.sh 2>&1 | tee "$RUNNER_TEMP/fsnotes-install-hint.log"
 
       - name: Build, sign and package the Mac app
         env:
@@ -62,6 +64,7 @@ jobs:
           name: FSNotes-macos-${{ steps.source.outputs.tag }}
           path: |
             dist/*.zip
+            dist/*.dmg
             dist/SHA256SUMS.txt
             dist/release-notes.md
           if-no-files-found: error
@@ -114,7 +117,7 @@ jobs:
               --title "FSNotes 定制版 $RELEASE_TAG（Apple Silicon）" \
               --notes-file dist/release-notes.md "${prerelease[@]}"
           fi
-          gh release upload "$RELEASE_TAG" dist/*.zip dist/SHA256SUMS.txt --clobber
+          gh release upload "$RELEASE_TAG" dist/*.dmg dist/*.zip dist/SHA256SUMS.txt --clobber
           gh release edit "$RELEASE_TAG" --draft=false --latest="$latest"
           url="$(gh release view "$RELEASE_TAG" --json url --jq .url)"
           printf 'Published Release: %s\n' "$url" >> "$GITHUB_STEP_SUMMARY"

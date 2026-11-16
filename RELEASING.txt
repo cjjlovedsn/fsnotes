@@ -8,8 +8,8 @@ FSNotes 定制版：打 tag 自动发布 Mac 应用
 先提交并推送改动，再给该提交创建一个新标签：
 
     git push origin master
-    git tag -a custom-2026.11.16.4 -m "FSNotes custom release"
-    git push origin custom-2026.11.16.4
+    git tag -a custom-2026.11.16.5 -m "FSNotes custom release"
+    git push origin custom-2026.11.16.5
 
 也支持以 v 开头的版本标签，例如 v7.6.1-custom.1。
 标签仅允许字母、数字、点、下划线和短横线，v/custom- 前缀后须以数字开头。
@@ -19,7 +19,7 @@ GitHub Actions 自动执行
 1. 从标签指定的确切提交获取源码，运行原生编辑器组件检查。
 2. 在 GitHub 的 Xcode 27 Apple Silicon runner 上使用 Release 配置编译。
 3. 给应用写入定制标签和源码提交信息，完成临时签名与签名校验。
-4. 打包 FSNotes.app、README 和 MIT 许可证，生成 SHA256SUMS.txt。
+4. 同时生成 DMG 安装盘和 ZIP 便携包，附带 README、MIT 许可证及 SHA256SUMS.txt。
 5. 核对构建产物后上传附件，最后正式发布 GitHub Release。
 
 构建或组件检查失败时，工作流不会发布 Release；可在失败运行的 Artifacts
@@ -32,7 +32,12 @@ GitHub Actions 自动执行
 custom-2026.11.16.1 不包含这些脚本，不能用于此入口。
 已经正式发布的版本不会被自动覆盖，失败留下的草稿可重新运行以完成上传。
 
-下载
+安装与下载
+推荐下载 DMG，打开后把 FSNotes.app 拖到 Applications 快捷方式，
+再从“应用程序”启动。ZIP 继续保留，解压后也可以拖入“应用程序”。
+首次从下载目录或 DMG 中运行时，会显示一次安装提示，可打开访达中的安装位置；
+已经放入系统或用户“应用程序”文件夹时不提示，Debug 构建也不提示。
+
     https://github.com/cjjlovedsn/fsnotes/releases/latest
 
 目前生成 arm64（Apple Silicon）应用，不包含 Intel 版本；应用使用临时签名，
@@ -43,6 +48,6 @@ custom-2026.11.16.1 不包含这些脚本，不能用于此入口。
 在 macOS 上安装 Xcode 27 或更新版本后运行（上游使用 macOS 27 SDK 接口）：
 
     Tests/CodeBlockCopy/run.sh
-    scripts/build-macos-release.sh custom-2026.11.16.4
+    scripts/build-macos-release.sh custom-2026.11.16.5
 
 输出位于 dist/，中间产物位于 .build-release/。

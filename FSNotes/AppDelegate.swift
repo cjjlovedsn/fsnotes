@@ -55,6 +55,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSFontManager.shared.fontPanel(false)?.orderOut(self)
 
         applyAppearance()
+        ApplicationInstallHint.presentIfNeeded(displayName: AppDelegate.appTitle)
 
         #if CLOUD_RELATED_BLOCK
         if let iCloudDocumentsURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents").standardized {

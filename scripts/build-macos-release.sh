@@ -51,15 +51,17 @@ codesign --force --deep --sign - "$stage_dir/FSNotes.app"
 codesign --verify --deep --strict "$stage_dir/FSNotes.app"
 lipo -verify_arch arm64 "$stage_dir/FSNotes.app/Contents/MacOS/FSNotes"
 
-archive_name="FSNotes-${release_tag}-macOS-arm64.zip"
-python3 - "$stage_dir" "$output_dir" "$release_tag" "$source_commit" "$archive_name" <<'PY'
+archive_base="FSNotes-${release_tag}-macOS-arm64"
+archive_name="$archive_base.zip"
+disk_image_name="$archive_base.dmg"
+python3 - "$stage_dir" "$output_dir" "$release_tag" "$source_commit" "$archive_name" "$disk_image_name" <<'PY'
 import os
 import plistlib
 import sys
 from pathlib import Path
 
 stage, output = map(Path, sys.argv[1:3])
-tag, commit, archive = sys.argv[3:]
+tag, commit, archive, disk_image = sys.argv[3:]
 repository = os.environ.get('GITHUB_REPOSITORY', 'cjjlovedsn/fsnotes')
 info = plistlib.loads((stage / 'FSNotes.app/Contents/Info.plist').read_bytes())
 minimum_os = info['LSMinimumSystemVersion']
@@ -74,16 +76,21 @@ build = info['CFBundleVersion']
 应用内部上游版本号：{version}（{build}）
 定制版本标记及源码提交也已写入应用 Info.plist。
 
-退出旧版后，打开 FSNotes.app，或将它拖入“应用程序”。
+推荐：打开 DMG，将 FSNotes.app 拖到旁边的 Applications（应用程序）快捷方式。
+安装后推出磁盘映像，从“应用程序”中启动 FSNotes。
+使用 ZIP 时，也请先退出旧版，把解压出的 FSNotes.app 拖入“应用程序”后再启动。
 本构建采用临时签名，未经过 Apple 公证，不包含 Intel 版本。
 原始项目的 MIT 许可见 LICENSE。
 后续下载：https://github.com/{repository}/releases/latest
 ''')
 (output / 'release-notes.md').write_text(f'''## Mac 应用下载
 
-下载 `{archive}`，退出旧版后解压，打开其中的 `FSNotes.app`。
+推荐下载 `{disk_image}`，打开后把 `FSNotes.app` 拖到旁边的 Applications 快捷方式，再从“应用程序”中启动。
+
+ZIP 便携包 `{archive}` 继续保留；解压后同样建议把应用拖入“应用程序”。
 
 - 平台：Apple Silicon（arm64），macOS {minimum_os} 或更新版本。
+- 首次在下载目录或磁盘映像中运行时，提示移到“应用程序”，并可打开访达中的安装位置。
 - 此 fork 包含纯图标代码块复制按钮、小手光标修复和两级全选。
 - 构建方式：GitHub Actions 在线执行原生组件检查及 Xcode Release 构建。
 - 本构建采用临时签名，未经过 Apple 公证；不包含 Intel 版本。
@@ -96,21 +103,4 @@ build = info['CFBundleVersion']
 ''')
 PY
 
-ditto -c -k --sequesterRsrc "$stage_dir" "$output_dir/$archive_name"
-python3 - "$output_dir" "$archive_name" <<'PY'
-import hashlib
-import sys
-import zipfile
-from pathlib import Path
-
-output = Path(sys.argv[1])
-archive = output / sys.argv[2]
-with zipfile.ZipFile(archive) as bundle:
-    assert bundle.testzip() is None, 'Archive checksum verification failed'
-    assert 'FSNotes.app/Contents/MacOS/FSNotes' in bundle.namelist()
-    assert 'LICENSE' in bundle.namelist()
-digest = hashlib.sha256(archive.read_bytes()).hexdigest()
-(output / 'SHA256SUMS.txt').write_text(f'{digest}  {archive.name}\n')
-print(f'Release archive: {archive}')
-print(f'SHA-256: {digest}')
-PY
+"$repo_dir/scripts/package-macos.sh" "$stage_dir" "$output_dir" "$archive_base" "FSNotes"
