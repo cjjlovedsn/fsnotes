@@ -22,6 +22,27 @@ fileprivate extension NSRange {
 
 class LayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     weak var processor: TextStorageProcessor?
+    static let codeBlockHeaderHeight: CGFloat = 26
+
+    // Include the opening fence even when concealed: it provides a dedicated
+    // toolbar row, so the copy control never covers editable code.
+    func codeBlockRect(for range: NSRange, in container: NSTextContainer) -> NSRect {
+        guard let storage = textStorage, range.length > 0,
+              range.location >= 0, NSMaxRange(range) <= storage.length else { return .zero }
+        let visibleRange = NotesTextProcessor.codeBlockBackgroundRange(in: storage, range: range)
+        let opening = (storage.string as NSString).lineRange(for: NSRange(location: range.location, length: 0))
+        // Hidden fence glyphs can be attached to the preceding line. Its newline
+        // still belongs to the fence's own fragment and anchors the toolbar.
+        let start = storage.attribute(NotesTextProcessor.collapsedCodeFence, at: range.location, effectiveRange: nil) as? Bool == true
+            ? NSMaxRange(opening) - 1 : range.location
+        let decoratedRange = NSRange(location: start, length: NSMaxRange(visibleRange) - start)
+        let glyphs = glyphRange(forCharacterRange: decoratedRange, actualCharacterRange: nil)
+        guard glyphs.length > 0 else { return .zero }
+        let rect = boundingRect(forGlyphRange: glyphs, in: container)
+        let inset = max(0, container.lineFragmentPadding - 5)
+        return NSRect(x: inset, y: rect.minY,
+                      width: max(0, container.size.width - 2 * inset), height: rect.height)
+    }
     
     override init() {
         super.init()
@@ -142,8 +163,7 @@ class LayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     }
     
     private func drawCodeBlockBackground(forGlyphRange glyphsToShow: NSRange, at origin: CGPoint) {
-        guard let textStorage = self.textStorage,
-              let context = NSGraphicsContext.current?.cgContext else {
+        guard let context = NSGraphicsContext.current?.cgContext else {
             return
         }
 
@@ -171,20 +191,9 @@ class LayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
                 continue
             }
 
-            let safeCharRange = NotesTextProcessor.codeBlockBackgroundRange(in: textStorage, range: codeBlockRange)
-            if safeCharRange.length == 0 { continue }
-            
-            let glyphRange = self.glyphRange(forCharacterRange: safeCharRange, actualCharacterRange: nil)
-            if glyphRange.length == 0 { continue }
-            
-            let boundingRect = self.boundingRect(forGlyphRange: glyphRange, in: textContainer)
-            if boundingRect.isEmpty { continue }
-            
-            // Padding left/right
-            let horizontalPadding: CGFloat = 5.0
-            let inset = max(0, textContainer.lineFragmentPadding - horizontalPadding)
-            let paddedRect = NSRect(x: origin.x + inset, y: origin.y + boundingRect.minY,
-                                    width: max(0, textContainer.size.width - 2 * inset), height: boundingRect.height)
+            let blockRect = codeBlockRect(for: codeBlockRange, in: textContainer)
+            if blockRect.isEmpty { continue }
+            let paddedRect = blockRect.offsetBy(dx: origin.x, dy: origin.y)
             
             // Round borders
             let radius: CGFloat = 5.0
@@ -213,13 +222,19 @@ class LayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
             forGlyphRange glyphRange: NSRange) -> Bool {
 
         let characters = characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
+        let isOpeningFence = processor?.editor?.note?.codeBlockRangesCache?.contains { range in
+            guard let storage = textStorage, range.location < storage.length else { return false }
+            let opening = (storage.string as NSString).lineRange(for: NSRange(location: range.location, length: 0))
+            return NSLocationInRange(NSMaxRange(opening) - 1, characters)
+        } == true
         if let textStorage = textStorage, characters.location < textStorage.length,
            textStorage.attribute(NotesTextProcessor.collapsedCodeFence, at: characters.location, effectiveRange: nil) as? Bool == true {
             // Keep collapsed fences positive but on whole-point boundaries.
             // A 0.1-point fragment shifts every following line off the pixel
             // grid, leaving selection edge pixels outside partial redraws.
-            lineFragmentRect.pointee.size.height = 1
-            lineFragmentUsedRect.pointee.size.height = 1
+            let height: CGFloat = isOpeningFence ? Self.codeBlockHeaderHeight : 1
+            lineFragmentRect.pointee.size.height = height
+            lineFragmentUsedRect.pointee.size.height = height
             baselineOffset.pointee = 1
             return true
         }
@@ -254,6 +269,9 @@ class LayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         // Null glyphs from the next heading may belong to this line's glyph range.
         // Their fonts must not determine the line's height or baseline.
         rect.size.height = ceil(max(finalLineHeight, fontLineHeight + (style?.lineSpacing ?? 0)))
+        if isOpeningFence {
+            rect.size.height += Self.codeBlockHeaderHeight
+        }
 
         var usedRect = lineFragmentUsedRect.pointee
         usedRect.size.height = rect.size.height
@@ -263,6 +281,9 @@ class LayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         baselineOffset.pointee = attachmentInfo.hasAttachment
             ? baselineOffset.pointee + baselineNudge
             : layoutManager.defaultBaselineOffset(for: currentFont) + baselineNudge
+        if isOpeningFence {
+            baselineOffset.pointee += Self.codeBlockHeaderHeight
+        }
 
         return true
     }

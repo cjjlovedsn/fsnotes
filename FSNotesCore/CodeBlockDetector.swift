@@ -16,6 +16,23 @@ class CodeBlockDetector {
 
     static let shared = CodeBlockDetector()
 
+    /// Strip only the two fence lines. Never trim code whitespace or blank lines.
+    static func codeBody(in block: String) -> String? {
+        guard let range = codeBodyRange(in: block) else { return nil }
+        return (block as NSString).substring(with: range)
+    }
+
+    static func codeBodyRange(in block: String) -> NSRange? {
+        let text = block as NSString
+        guard text.length > 0 else { return nil }
+        let opening = text.lineRange(for: NSRange(location: 0, length: 0))
+        let closing = text.lineRange(for: NSRange(location: text.length - 1, length: 0))
+        guard NSMaxRange(opening) <= closing.location,
+              text.substring(with: opening).hasPrefix("```"),
+              text.substring(with: closing) == "```" else { return nil }
+        return NSRange(location: NSMaxRange(opening), length: closing.location - NSMaxRange(opening))
+    }
+
     private let pattern: String
     private let regex: NSRegularExpression
     private var previousRanges: [NSRange] = []

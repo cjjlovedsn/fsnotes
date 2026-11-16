@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CA1200000000000000000001 /* MarkdownBlockSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1200000000000000000000 /* MarkdownBlockSelection.swift */; };
+		CA1200000000000000000002 /* MarkdownBlockSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1200000000000000000000 /* MarkdownBlockSelection.swift */; };
+		CA1100000000000000000001 /* CodeBlockCopyButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1100000000000000000000 /* CodeBlockCopyButton.swift */; };
+		CA1100000000000000000002 /* CodeBlockCopyButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1100000000000000000000 /* CodeBlockCopyButton.swift */; };
 		1102DDB12EE4C280005029A6 /* EditTextView+Complete.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1102DDB02EE4C277005029A6 /* EditTextView+Complete.swift */; };
 		1102DDB22EE4C280005029A6 /* EditTextView+Complete.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1102DDB02EE4C277005029A6 /* EditTextView+Complete.swift */; };
 		110BE0112EE86B4A00C5E456 /* Clojure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110BE0102EE86B4600C5E456 /* Clojure.swift */; };
@@ -991,6 +995,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CA1200000000000000000000 /* MarkdownBlockSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownBlockSelection.swift; sourceTree = "<group>"; };
+		CA1100000000000000000000 /* CodeBlockCopyButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeBlockCopyButton.swift; sourceTree = "<group>"; };
 		1102DDB02EE4C277005029A6 /* EditTextView+Complete.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditTextView+Complete.swift"; sourceTree = "<group>"; };
 		110BE0102EE86B4600C5E456 /* Clojure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clojure.swift; sourceTree = "<group>"; };
 		110BE0142EE8C1C600C5E456 /* Html.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Html.swift; sourceTree = "<group>"; };
@@ -1930,6 +1936,7 @@
 				D7E6D9D2208085BB003ECAFC /* View */,
 				D7793C721F211C6000CA39B7 /* AppDelegate.swift */,
 				11D702A52E5ADDE2004DBAEC /* LayoutManager.swift */,
+				CA1200000000000000000000 /* MarkdownBlockSelection.swift */,
 				D7E6ACE820832D40003599A2 /* AppDelegate+URLRoutes.swift */,
 				D74112271FABA21B00AB619A /* MainWindow.swift */,
 				275592961F3AE9B5006B8988 /* MainWindowController.swift */,
@@ -2011,6 +2018,7 @@
 				11F018AB2EF7E77B00F07580 /* MPreviewFindPanel.swift */,
 				11ABE5E12EEEFCF700E7C9EB /* NotesCounterView.swift */,
 				D797004B1F3DD10700BAD94D /* EditTextView.swift */,
+				CA1100000000000000000000 /* CodeBlockCopyButton.swift */,
 				11A6A8FC2EF074D2005D000A /* EditTextView+Todo.swift */,
 				117C0E4C2EEDB9B70086419C /* EditTextView+Clicked.swift */,
 				1102DDB02EE4C277005029A6 /* EditTextView+Complete.swift */,
@@ -2975,6 +2983,7 @@
 				D730BD2A222BF32A00E69C93 /* KeychainPasswordItem.swift in Sources */,
 				D75EE7FD2078C5460055F159 /* SidebarCellView.swift in Sources */,
 				D797004C1F3DD10700BAD94D /* EditTextView.swift in Sources */,
+				CA1100000000000000000001 /* CodeBlockCopyButton.swift in Sources */,
 				D73BCCC228EB5EC3008B3BBC /* DiffEntry.swift in Sources */,
 				D7BB2DFE29A0157700D5055A /* Storage+Git.swift in Sources */,
 				D77E0537246312B300AD7772 /* StorageType.swift in Sources */,
@@ -3036,6 +3045,7 @@
 				D7CCEDB92C6BA2F300A3BB83 /* ClickableTextField.swift in Sources */,
 				D72682AA29BE8E2000F6E961 /* RepositoryAction.swift in Sources */,
 				11D702A72E5ADDED004DBAEC /* LayoutManager.swift in Sources */,
+				CA1200000000000000000002 /* MarkdownBlockSelection.swift in Sources */,
 				D73BCCFB28EB5EC4008B3BBC /* Repository.swift in Sources */,
 				D73BCCC528EB5EC4008B3BBC /* Diff.swift in Sources */,
 				D73BCCB328EB5EC3008B3BBC /* TagIterator.swift in Sources */,
@@ -3260,6 +3270,7 @@
 				D7E81C331F925B5F00416A91 /* UserDefaultsManagement.swift in Sources */,
 				11D943232E643F410010CC2B /* Php.swift in Sources */,
 				D7E81C341F925B5F00416A91 /* EditTextView.swift in Sources */,
+				CA1100000000000000000002 /* CodeBlockCopyButton.swift in Sources */,
 				D7E81C361F925B5F00416A91 /* AppDelegate.swift in Sources */,
 				D73BCCE128EB5EC4008B3BBC /* Index.swift in Sources */,
 				D7CDE9DD2161767B00DC5978 /* AppearanceType.swift in Sources */,
@@ -3273,6 +3284,7 @@
 				D7CCEDBA2C6BA2F300A3BB83 /* ClickableTextField.swift in Sources */,
 				D72682AB29BE8E2000F6E961 /* RepositoryAction.swift in Sources */,
 				11D702A62E5ADDED004DBAEC /* LayoutManager.swift in Sources */,
+				CA1200000000000000000001 /* MarkdownBlockSelection.swift in Sources */,
 				D73BCCFC28EB5EC4008B3BBC /* Repository.swift in Sources */,
 				D73BCCC628EB5EC4008B3BBC /* Diff.swift in Sources */,
 				D73BCCB428EB5EC3008B3BBC /* TagIterator.swift in Sources */,

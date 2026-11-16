@@ -36,6 +36,7 @@ class EditTextView: NSTextView, NSTextFinderClient, NSSharingServicePickerDelega
     private var preview = false
     private var updatingConcealedSyntax = false
     private var selectingWithMouse = false
+    var codeBlockCopyButtons: [CodeBlockCopyButton] = []
 
     @objc private func refreshConcealedSyntax() {
         guard !updatingConcealedSyntax, !selectingWithMouse, let textStorage = textStorage,
@@ -108,6 +109,7 @@ class EditTextView: NSTextView, NSTextFinderClient, NSSharingServicePickerDelega
 
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
+        updateCodeBlockCopyButtons()
 
         guard UserDefaultsManagement.inlineTags else { return }
 
@@ -559,7 +561,27 @@ class EditTextView: NSTextView, NSTextFinderClient, NSSharingServicePickerDelega
         NSWorkspace.shared.open(url)
     }
 
+    override func selectAll(_ sender: Any?) {
+        let selection = selectedRange()
+        if !isPreviewEnabled(), let storage = textStorage,
+           let block = MarkdownBlockSelection.range(in: storage.string, selection: selection,
+                                                    codeBlocks: note?.codeBlockRangesCache ?? [],
+                                                    isMarkdown: note?.isMarkdown() == true),
+           selection != block {
+            // The selection itself records the stage; moving or editing resets it.
+            setSelectedRange(block)
+            return
+        }
+        super.selectAll(sender)
+    }
+
+    override func cursorUpdate(with event: NSEvent) {
+        if updateCodeBlockCopyCursor(with: event) { return }
+        super.cursorUpdate(with: event)
+    }
+
     override func mouseMoved(with event: NSEvent) {
+        if updateCodeBlockCopyCursor(with: event) { return }
         if editorViewController?.vcNonSelectedLabel?.isHidden == false {
             NSCursor.arrow.set()
             return
@@ -1128,6 +1150,7 @@ class EditTextView: NSTextView, NSTextFinderClient, NSSharingServicePickerDelega
     }
 
     private func updateCursorForMouse(at event: NSEvent) {
+        if updateCodeBlockCopyCursor(with: event) { return }
         guard let container = self.textContainer,
               let manager = self.layoutManager,
               let textStorage = self.textStorage else { return }
