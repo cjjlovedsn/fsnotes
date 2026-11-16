@@ -1,0 +1,118 @@
+name: macOS Release
+run-name: Release ${{ inputs.tag || github.ref_name }}
+
+on:
+  push:
+    tags: ['v*', 'custom-*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag (v... or custom-...)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build-macos:
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+    outputs:
+      tag: ${{ steps.source.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check out the exact tagged source
+        id: source
+        shell: bash
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^(v[0-9]|custom-[0-9])[0-9A-Za-z._-]*$ ]]; then
+            echo 'Release tag must start with v<digit> or custom-<digit> and contain only letters, digits, dots, underscores and hyphens.' >&2
+            exit 1
+          fi
+          commit="$(git rev-parse --verify "refs/tags/$RELEASE_TAG^{commit}")"
+          git checkout --detach "$commit"
+          test -x scripts/build-macos-release.sh
+          printf 'tag=%s\n' "$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Run native editor regression checks
+        run: Tests/CodeBlockCopy/run.sh 2>&1 | tee "$RUNNER_TEMP/fsnotes-checks.log"
+
+      - name: Build, sign and package the Mac app
+        env:
+          FSNOTES_BUILD_DIR: ${{ runner.temp }}/fsnotes-build
+          FSNOTES_BUILD_LOG: ${{ runner.temp }}/fsnotes-build.log
+        run: scripts/build-macos-release.sh "$RELEASE_TAG"
+
+      - name: Preserve release artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: FSNotes-macos-${{ steps.source.outputs.tag }}
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            dist/release-notes.md
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Preserve diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: FSNotes-build-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/fsnotes-*.log
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish:
+    needs: build-macos
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ needs.build-macos.outputs.tag }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: FSNotes-macos-${{ needs.build-macos.outputs.tag }}
+          path: dist
+
+      - name: Verify downloaded package
+        working-directory: dist
+        run: sha256sum --check SHA256SUMS.txt
+
+      - name: Upload assets and publish Release
+        shell: bash
+        run: |
+          prerelease=()
+          latest=true
+          case "$RELEASE_TAG" in
+            *-alpha*|*-beta*|*-rc*) prerelease=(--prerelease); latest=false ;;
+          esac
+          if gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft > "$RUNNER_TEMP/release-state"; then
+            if [[ "$(cat "$RUNNER_TEMP/release-state")" != true ]]; then
+              echo 'This tag already has a published Release. Create a new tag to publish a new build.' >&2
+              exit 1
+            fi
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --draft \
+              --title "FSNotes 定制版 $RELEASE_TAG（Apple Silicon）" \
+              --notes-file dist/release-notes.md "${prerelease[@]}"
+          fi
+          gh release upload "$RELEASE_TAG" dist/*.zip dist/SHA256SUMS.txt --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --latest="$latest"
+          url="$(gh release view "$RELEASE_TAG" --json url --jq .url)"
+          printf 'Published Release: %s\n' "$url" >> "$GITHUB_STEP_SUMMARY"

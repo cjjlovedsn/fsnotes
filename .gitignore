@@ -1,4 +1,6 @@
 Pods
+/.build-release/
+/dist/
 *.xcuserstate
 xcuserdata
 Podfile.lock
